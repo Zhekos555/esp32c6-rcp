@@ -17,6 +17,8 @@ jobs:
           cd /opt/esp/idf/examples/openthread/ot_rcp
           idf.py set-target esp32c6
           idf.py build
+          echo "=== RCP CONFIG ==="
+          grep -Ei 'CONFIG_.*(OPENTHREAD|UART|USB_SERIAL_JTAG|CONSOLE)' sdkconfig || true
           mkdir -p "$GITHUB_WORKSPACE/firmware"
           cp build/bootloader/bootloader.bin "$GITHUB_WORKSPACE/firmware/"
           cp build/partition_table/partition-table.bin "$GITHUB_WORKSPACE/firmware/"
