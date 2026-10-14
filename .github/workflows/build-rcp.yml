@@ -20,16 +20,23 @@ jobs:
 
           idf.py set-target esp32c6
 
-          # Configure Spinel transport over native USB Serial/JTAG
-          cat >> sdkconfig.defaults <<'EOF'
-          CONFIG_OPENTHREAD_RCP_USB_SERIAL_JTAG=y
+          # Change RCP transport from UART to USB Serial/JTAG
+          sed -i '/^CONFIG_OPENTHREAD_RCP_UART=y$/d' sdkconfig
+          sed -i '/^# CONFIG_OPENTHREAD_RCP_USB_SERIAL_JTAG is not set$/d' sdkconfig
+          cat >> sdkconfig <<'EOF'
           # CONFIG_OPENTHREAD_RCP_UART is not set
+          CONFIG_OPENTHREAD_RCP_USB_SERIAL_JTAG=y
           EOF
 
+          idf.py reconfigure
           idf.py build
 
-          echo "=== RCP CONFIG ==="
-          grep -Ei 'CONFIG_.*(OPENTHREAD|UART|USB_SERIAL_JTAG|CONSOLE)' sdkconfig || true
+          echo "=== FINAL RCP CONFIG ==="
+          grep -E '^CONFIG_OPENTHREAD_RCP_|^# CONFIG_OPENTHREAD_RCP_' sdkconfig
+
+          # Stop if USB transport was not enabled
+          grep -qx 'CONFIG_OPENTHREAD_RCP_USB_SERIAL_JTAG=y' sdkconfig
+          grep -qx '# CONFIG_OPENTHREAD_RCP_UART is not set' sdkconfig
 
           mkdir -p "$GITHUB_WORKSPACE/firmware"
           cp build/bootloader/bootloader.bin "$GITHUB_WORKSPACE/firmware/"
