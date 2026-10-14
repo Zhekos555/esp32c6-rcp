@@ -1,0 +1,31 @@
+name: Build ESP32-C6 OpenThread RCP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:release-v5.5
+    steps:
+      - name: Build official Espressif RCP example
+        shell: bash
+        run: |
+          set -euo pipefail
+          . /opt/esp/idf/export.sh
+          cd /opt/esp/idf/examples/openthread/ot_rcp
+          idf.py set-target esp32c6
+          idf.py build
+          mkdir -p "$GITHUB_WORKSPACE/firmware"
+          cp build/bootloader/bootloader.bin "$GITHUB_WORKSPACE/firmware/"
+          cp build/partition_table/partition-table.bin "$GITHUB_WORKSPACE/firmware/"
+          cp build/esp_ot_rcp.bin "$GITHUB_WORKSPACE/firmware/"
+          cp build/flasher_args.json "$GITHUB_WORKSPACE/firmware/"
+          cp build/flash_args "$GITHUB_WORKSPACE/firmware/"
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32c6-openthread-rcp
+          path: firmware/
+          if-no-files-found: error
